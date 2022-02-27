@@ -6,48 +6,49 @@ using UnityEngine.SceneManagement;
 
 public class ScreenTransition : MonoBehaviour
 {
-    public Image mainImage;
+    [SerializeField] private Image mainImage;
 
     private Tween _transitionTween;
 
-    public void TransitionToScene(int targetScene, float transitionAnimTime = 0.75f)
+    public void TransitionToScene(int sceneId, float overTime)
     {
         DontDestroyOnLoad(gameObject);
-        // transition out
-        _transitionTween = gameObject.AddComponent<Tween>();
-        _transitionTween.ease = Tween.Ease.OutQuad;
-        _transitionTween.overTime = transitionAnimTime;
-        _transitionTween.delay = 0.125f;
-        _transitionTween.ignoreTimeScale = true;
-        _transitionTween.startValue = 2000f;
-        _transitionTween.endValue = 0f;
-        _transitionTween.onUpdate = delegate (float v, float t)
+        //transition out
+        _transitionTween = new Tween()
+        .SetEase(Tween.Ease.OutQuad)
+        .SetTime(overTime)
+        .SetDelay(0.125f)
+        .SetIgnoreGameSpeed(true)
+        .SetStart(2000)
+        .SetEnd(0)
+        .SetOnUpdate(delegate (float v, float t)
         {
             mainImage.rectTransform.sizeDelta = new Vector2(v, v);
-        };
-        _transitionTween.onComplete = delegate ()
+        })
+        .SetOnComplete(delegate ()
         {
             mainImage.rectTransform.sizeDelta = new Vector2(0f, 0f);
 
-            // change scene
-            SceneManager.LoadScene(targetScene);
+            //change scene
+            SceneManager.LoadScene(sceneId);
 
-            // transition in
-            _transitionTween = gameObject.AddComponent<Tween>();
-            _transitionTween.ease = Tween.Ease.InQuad;
-            _transitionTween.overTime = transitionAnimTime;
-            _transitionTween.delay = 0.25f;
-            _transitionTween.ignoreTimeScale = true;
-            _transitionTween.startValue = 0f;
-            _transitionTween.endValue = 2000f;
-            _transitionTween.onUpdate = delegate (float v, float t)
+            //transition in
+            _transitionTween = new Tween()
+            .SetEase(Tween.Ease.InQuad)
+            .SetTime(overTime)
+            .SetDelay(0.25f)
+            .SetIgnoreGameSpeed(true)
+            .SetStart(0f)
+            .SetEnd(2000)
+            .SetDestroyOnLoad(false)
+            .SetOnUpdate(delegate (float v, float t)
             {
                 mainImage.rectTransform.sizeDelta = new Vector2(v, v);
-            };
-            _transitionTween.onComplete = delegate ()
+            })
+            .SetOnComplete(delegate ()
             {
                 Destroy(gameObject);
-            };
-        };
+            });
+        });
     }
 }
