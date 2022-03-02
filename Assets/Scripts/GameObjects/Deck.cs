@@ -14,13 +14,16 @@ public class Deck : MonoBehaviour
 
     [SerializeField] private Transform _visualsRoot;
 
+    [SerializeField] private Transform _cardSpawnRoot;
+
     private Stack<Card> _cards = new Stack<Card>();
 
+    public Transform CardSpawnRoot => _cardSpawnRoot;
     /*
         Create ordered array of cards, assign them with sprites ranks and suits
         Shuffle array and then populate _cards stack
     */
-    public void CreateCards()
+    public void CreateCards(SuitSO suitSettings)
     {
         Card[] tempCardArr = new Card[52];
         Card tempCard;
@@ -30,7 +33,7 @@ public class Deck : MonoBehaviour
             for (int j = 0; j < 13; j++)
             {
                 cardInDeckIndex = i * 13 + j;
-                tempCard = new Card((ESuit)i, j, _cardSprites[cardInDeckIndex], _cardBackSprite);
+                tempCard = new Card(suitSettings.SuitOrder[i], j, _cardSprites[cardInDeckIndex], _cardBackSprite);
                 tempCardArr[cardInDeckIndex] = tempCard;
             }
         }
@@ -42,6 +45,19 @@ public class Deck : MonoBehaviour
             _cards.Push(card);
         }
     }
+
+    public void Shuffle()
+    {
+        Card[] tempCardArr = _cards.ToArray();
+        ShuffleCardArr(tempCardArr);
+
+        _cards.Clear();
+        foreach (Card card in tempCardArr)
+        {
+            _cards.Push(card);
+        }
+    }
+
     // Tween in the deck of cards
     public void Show(Action onComplete)
     {
@@ -61,7 +77,6 @@ public class Deck : MonoBehaviour
             .SetEnd(1)
             .SetDamping(3f)
             .SetOscillations(1f)
-            .SetDestroyOnLoad(true)
             .SetOnUpdate(delegate (float v, float t)
             {
                 _visualsRoot.localScale = Vector3.one * v;
@@ -76,9 +91,9 @@ public class Deck : MonoBehaviour
     // pop card from _cards stack, create CardDisplay, assign card data to it, return it
     public CardDisplay DrawCard()
     {
-        if (_cards.Count > 0)
+        if (_cards.Count > 0 && _cardSpawnRoot != null)
         {
-            CardDisplay drawnCard = Instantiate(_cardPrefab, transform.position, Quaternion.Euler(0, 0, 180));
+            CardDisplay drawnCard = Instantiate(_cardPrefab, _cardSpawnRoot.transform.position, Quaternion.identity);
             drawnCard.SetCard(_cards.Pop());
             return drawnCard;
         }
@@ -87,26 +102,29 @@ public class Deck : MonoBehaviour
             return null;
         }
     }
+    public void AddCard(Card card)
+    {
+        _cards.Push(card);
+    }
 
-    public void AnimateCardToPosition(CardDisplay card, Vector3 targetPosition, Action onComplete)
+    public void AnimateCardToPosition(float animationDuration, CardDisplay card, int i, Vector3 targetPosition, Quaternion targetRotation, Action<CardDisplay> onComplete)
     {
         Vector3 cardStartPosition = card.transform.position;
         Quaternion cardStartRotation = card.transform.rotation;
-        float animationDuration = 0.7f;
         new Tween()
-           .SetEase(Tween.Ease.InExpo)
+           .SetEase(Tween.Ease.InQuad)
            .SetTime(animationDuration)
            .SetIgnoreGameSpeed(false)
            .SetStart(0f)
            .SetEnd(1)
-           .SetDestroyOnLoad(false)
            .SetOnUpdate(delegate (float v, float t)
            {
                card.transform.position = Vector3.Lerp(cardStartPosition, targetPosition, v);
+               card.transform.rotation = Quaternion.Lerp(cardStartRotation, targetRotation, v);
            })
            .SetOnComplete(delegate ()
            {
-               onComplete?.Invoke();
+               onComplete?.Invoke(card);
            });
     }
     /*
