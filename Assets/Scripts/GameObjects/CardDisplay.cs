@@ -3,15 +3,45 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(SpriteRenderer))]
+[RequireComponent(typeof(Draggable))]
 public class CardDisplay : MonoBehaviour
 {
     private SpriteRenderer _spriteRenderer;
-    private Card _card;
-    public Card Card => _card;
+    private Draggable _draggable;
 
-    void Awake()
+    private Card _card;
+
+    public Card Card => _card;
+    public delegate void CardDelegate(CardDisplay cardDisplay);
+
+    public event CardDelegate DragStarted;
+    public event CardDelegate DragEnded;
+
+    public Draggable Draggable => _draggable;
+
+    private void Awake()
     {
         _spriteRenderer = GetComponent<SpriteRenderer>();
+        _draggable = GetComponent<Draggable>();
+        _draggable.enabled = false;
+        _draggable.DragStarted += OnDragStarted;
+        _draggable.DragEnded += OnDragEnded;
+    }
+
+    private void OnDestroy()
+    {
+        _draggable.DragStarted -= OnDragStarted;
+        _draggable.DragEnded -= OnDragEnded;
+    }
+
+    private void OnDragStarted()
+    {
+        DragStarted?.Invoke(this);
+    }
+
+    private void OnDragEnded()
+    {
+        DragEnded?.Invoke(this);
     }
 
     public void SetCard(Card card)

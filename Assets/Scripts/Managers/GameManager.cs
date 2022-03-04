@@ -79,8 +79,8 @@ public class GameManager : MonoBehaviour
             CardDisplay card = _deck.DrawCard();
             card.SetSortingOrder(_settings.CardsDealNum - i);
             var cardInHandPosition = _hand.GetCardPositionAt(i);
-            var cardRotation = _hand.GetCardRotationAt(i);
-            _deck.AnimateCardToPosition(_settings.CardDealingAnimTime, card, i, _hand.transform.position + new Vector3(-2 + i * 0.3f, 0, 0), Quaternion.Euler(cardRotation), OnCardAnimatedToHand);
+            var cardRotation = _hand.GetCardEulerRotationAt(i);
+            _deck.AnimateCardToPosition(_settings.CardDealingAnimTime, card, i, _hand.GetCardPositionAt(i), Quaternion.Euler(cardRotation), OnCardAnimatedToHand);
             card.Turn(true, _settings.CardTurnAnimTime, 0.3f);
             yield return new WaitForSeconds(_settings.DelayBetweenDealingCards);
         }
@@ -110,18 +110,24 @@ public class GameManager : MonoBehaviour
 
     private void OnCardAnimatedToHand(CardDisplay card)
     {
-        _hand.AddCardAt(card);
+        _hand.AddCard(card);
         card.TurnFaceUp();
     }
 
     // return cards from hand to deck, shuffle, deal new hand
     public void RedealHand()
     {
+        _hand.SetCardsInteractable(false);
         StartCoroutine(ReturnCardsToDeck(() =>
         {
             _deck.Shuffle();
             StartCoroutine(DealCardsToHand());
         }));
+    }
+
+    public void AnimateSortedCards(List<int> cards)
+    {
+
     }
 
     public void SubsequentSort()

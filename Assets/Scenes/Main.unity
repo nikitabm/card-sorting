@@ -224,6 +224,7 @@ GameObject:
   - component: {fileID: 528063953}
   - component: {fileID: 528063952}
   - component: {fileID: 528063951}
+  - component: {fileID: 528063954}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -296,6 +297,22 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 8
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &528063954
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 528063950}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56666c5a40171f54783dd416a44f42bf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_EventMask:
+    serializedVersion: 2
+    m_Bits: 64
+  m_MaxRayIntersections: 0
 --- !u!1 &565135952
 GameObject:
   m_ObjectHideFlags: 0
@@ -533,7 +550,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 436a64f6b307b014693abf473fb5a128, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cardArchMaxDelta: 30
+  _cardSpacing: 0.7
+  _maxCardRotationDiff: 60
+  _cardYPositionFromRotationScaleFactor: 0.03
 --- !u!4 &1197043652
 Transform:
   m_ObjectHideFlags: 0

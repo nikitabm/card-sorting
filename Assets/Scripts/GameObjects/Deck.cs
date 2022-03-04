@@ -95,6 +95,7 @@ public class Deck : MonoBehaviour
         {
             CardDisplay drawnCard = Instantiate(_cardPrefab, _cardSpawnRoot.transform.position, Quaternion.identity);
             drawnCard.SetCard(_cards.Pop());
+            drawnCard.name = $"{drawnCard.Card.Suit}_{drawnCard.Card.Rank}";
             return drawnCard;
         }
         else
@@ -102,6 +103,7 @@ public class Deck : MonoBehaviour
             return null;
         }
     }
+
     public void AddCard(Card card)
     {
         _cards.Push(card);
