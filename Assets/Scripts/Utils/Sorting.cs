@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class Sorting
 {
-    public static List<int>[] SubsequentSort(List<CardDisplay> cardsToSort, SettingsSO settings)
+    public static List<int>[] SubsequentSort(List<CardDisplay> cardsToSort, SettingsSO settings, bool AllPossibleCombinations = false)
     {
         // save suit settings
         var cardSettings = settings.cardSettings;
@@ -56,7 +56,7 @@ public class Sorting
         return sortedCardsIds.Where(combList => combList.Count != 0).ToArray();
     }
 
-    public static List<int>[] SameValueSort(List<CardDisplay> cardsToSort, SettingsSO settings)
+    public static List<int>[] SameValueSort(List<CardDisplay> cardsToSort, SettingsSO settings, bool allPossibleCombinations = false)
     {
         int numOfCompletedCombinations = 0;
         // save suit settings
@@ -101,7 +101,11 @@ public class Sorting
                         {
                             sortedCardsIds[numOfCompletedCombinations].Clear();
                         }
-                        i = j - 1;
+                        // do not skip already checked cards if we need to return all possible combinations
+                        if (!allPossibleCombinations)
+                        {
+                            i = j - 1;
+                        }
                         break;
                     }
                 }
@@ -113,8 +117,12 @@ public class Sorting
                     }
                     break;
                 }
-                // when reached the end of loop = jump to the last element to skip unnecessary loops
-                i = j - 1;
+                // do not skip already checked cards if we need to return all possible combinations
+                if (!allPossibleCombinations)
+                {
+                    // when reached the end of loop = jump to the last element to skip unnecessary loops
+                    i = j - 1;
+                }
             }
         }
         // remove empty combination lists
@@ -162,35 +170,26 @@ public class Sorting
             currentCombs.Add(i);
             for (int j = 0; j < allCombs.Length; j++)
             {
-                if (j != i)
-                {
-                    bool hasSameElements = allCombs[i].Intersect(allCombs[j]).Any();
-                    if (hasSameElements)
-                    {
-                        continue;
-                    }
-                    else
-                    {
-                        currentBestCombScore += GetCombinationValue(allCombs[j], cardsToSort, settings.cardSettings);
-                        currentCombs.Add(j);
-                    }
-                    Debug.Log(currentBestCombScore);
-                    if (currentBestCombScore > bestCombScore)
-                    {
-                        bestCombScore = currentBestCombScore;
+                // if (j != i)
+                // {
+                //     bool hasSameElements = allCombs[i].Intersect(allCombs[j]).Any();
+                //     if (hasSameElements)
+                //     {
+                //         continue;
+                //     }
+                //     else
+                //     {
+                //         currentBestCombScore += GetCombinationValue(allCombs[j], cardsToSort, settings.cardSettings);
+                //         currentCombs.Add(j);
+                //     }
+                //     Debug.Log(currentBestCombScore);
+                //     if (currentBestCombScore > bestCombScore)
+                //     {
+                //         bestCombScore = currentBestCombScore;
 
-                        bestCombIds = currentCombs;
-                        Debug.Log("NEW BEST COMBINATION");
-                        for (int h = 0; h < currentCombs.Count; h++)
-                        {
-                            for (int k = 0; k < allCombs[currentCombs[h]].Count; k++)
-                            {
-                                Debug.Log(cardsToSort[allCombs[currentCombs[h]][k]].name);
-                            }
-                            Debug.Log("-----------------------");
-                        }
-                    }
-                }
+                //         bestCombIds = currentCombs;
+                //     }
+                // }
             }
         }
         List<int>[] mostOptimalCombsIds = new List<int>[bestCombIds.Count].Select(item => new List<int>()).ToArray();

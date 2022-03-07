@@ -77,7 +77,7 @@ public class GameManager : MonoBehaviour
             }, 0.75f));
         });
     }
-
+    // return cards to hand, deal randomised deck, check state to prevent pressing multiple times
     public void RedealDefaultHand()
     {
         if (_state != EGameState.Idle)
@@ -93,7 +93,7 @@ public class GameManager : MonoBehaviour
              StartCoroutine(DealCardsToHand(ResetGameState));
          }));
     }
-
+    // Return cards from hand to deck, deal predefined deck
     public void RedealPredefinedHand()
     {
         if (_state != EGameState.Idle)
@@ -109,7 +109,7 @@ public class GameManager : MonoBehaviour
              StartCoroutine(DealPredefinedCardsToHand(ResetGameState));
          }));
     }
-
+    // function called from UI button. Check state to prevent pressing multiple times
     public void SubsequentSortOfPlayerHand()
     {
         if (_state != EGameState.Idle)
@@ -119,7 +119,7 @@ public class GameManager : MonoBehaviour
         List<int>[] sortedPlayerCards = Sorting.SubsequentSort(_hand.Cards, _settings);
         StartCoroutine(AnimateSortedPlayerCards(sortedPlayerCards, ResetGameState));
     }
-
+    // function called from UI button. Check state to prevent pressing multiple times
     public void SameValueSortOfPlayerHand()
     {
         if (_state != EGameState.Idle)
@@ -130,7 +130,7 @@ public class GameManager : MonoBehaviour
         StartCoroutine(AnimateSortedPlayerCards(sortedPlayerCards, ResetGameState));
 
     }
-
+    // function that is called from UI button. Check state to prevent user from pressing the button right after pressing it once
     public void SmartSortOfPlayerHand()
     {
         if (_state != EGameState.Idle)
@@ -140,7 +140,10 @@ public class GameManager : MonoBehaviour
         List<int>[] sortedPlayerCards = Sorting.SmartSorting(_hand.Cards, _settings);
         StartCoroutine(AnimateSortedPlayerCards(sortedPlayerCards, ResetGameState));
     }
-
+    /*
+    Animate sorting player cards based on array of lists
+    every list in array is a valid combination of cards
+    */
     private IEnumerator AnimateSortedPlayerCards(List<int>[] sortedCardIds, Action onComplete)
     {
         List<CardDisplay> cards = _hand.Cards;
@@ -167,11 +170,15 @@ public class GameManager : MonoBehaviour
         }
         onComplete?.Invoke();
     }
-
+    /*
+    Return cards to deck
+    keep track of cards that finished tweening to hand (used to call onComplete)
+    */
     private IEnumerator ReturnCardsToDeck(bool addCardToDeck, Action onComplete)
     {
         int cardsDealt = 0;
         int cardsInHand = _hand.Cards.Count;
+        // for each card- animate it to position, increment cardsDealt to call onComplete once everything is finished
         for (int i = cardsInHand - 1; i >= 0; i--)
         {
             CardDisplay card = _hand.GetCardAt(i);
@@ -189,6 +196,7 @@ public class GameManager : MonoBehaviour
             card.Turn(false, _settings.CardTurnAnimTime, 0);
             yield return new WaitForSeconds(_settings.DelayBetweenReturningCardsToDeck);
         }
+        yield return new WaitUntil(() => cardsDealt == cardsInHand);
         onComplete?.Invoke();
     }
 
@@ -204,13 +212,20 @@ public class GameManager : MonoBehaviour
             Debug.LogWarning("Dealt NULL from deck, not adding NULL to hand.");
         }
     }
+
     private void ResetGameState()
     {
         _state = EGameState.Idle;
     }
+    /*
+    Deal predefined cards to Hand
+    save flag _dealtPredefinedDeck to know whether cards from player hand should be added back to deck upon redealing
+    keep track of cards that finished tweening to hand (used to call onComplete)
+    */
     private IEnumerator DealPredefinedCardsToHand(Action onComplete)
     {
         _dealtPredefinedDeck = true;
+        int cardsDealt = 0;
         for (int i = 0; i < 11; i++)
         {
             CardDisplay card;
@@ -222,16 +237,23 @@ public class GameManager : MonoBehaviour
             var cardInHandPosition = _hand.GetCardPositionAt(i);
             var cardRotation = _hand.GetCardEulerRotationAt(i);
 
-            _deck.AnimateCardToPosition(_settings.CardDealingAnimTime, card, i, _hand.GetCardPositionAt(i), Quaternion.Euler(cardRotation), OnCardAnimatedToHand);
+            _deck.AnimateCardToPosition(_settings.CardDealingAnimTime, card, i, _hand.GetCardPositionAt(i), Quaternion.Euler(cardRotation), (CardDisplay c) =>
+            {
+                OnCardAnimatedToHand(c);
+                cardsDealt++;
+            });
             card.Turn(true, _settings.CardTurnAnimTime, 0.3f);
             yield return new WaitForSeconds(_settings.DelayBetweenDealingCards);
         }
+        yield return new WaitUntil(() => cardsDealt == 11);
         onComplete?.Invoke();
     }
 
     private IEnumerator DealCardsToHand(Action onComplete)
     {
         _dealtPredefinedDeck = false;
+        // keep track of number of cards that finished tweening to player hand
+        int cardsDealt = 0;
         for (int i = 0; i < _settings.CardsDealNum; i++)
         {
             CardDisplay card;
@@ -243,10 +265,15 @@ public class GameManager : MonoBehaviour
             var cardInHandPosition = _hand.GetCardPositionAt(i);
             var cardRotation = _hand.GetCardEulerRotationAt(i);
 
-            _deck.AnimateCardToPosition(_settings.CardDealingAnimTime, card, i, _hand.GetCardPositionAt(i), Quaternion.Euler(cardRotation), OnCardAnimatedToHand);
+            _deck.AnimateCardToPosition(_settings.CardDealingAnimTime, card, i, _hand.GetCardPositionAt(i), Quaternion.Euler(cardRotation), (CardDisplay c) =>
+            {
+                OnCardAnimatedToHand(c);
+                cardsDealt++;
+            });
             card.Turn(true, _settings.CardTurnAnimTime, 0.3f);
             yield return new WaitForSeconds(_settings.DelayBetweenDealingCards);
         }
+        yield return new WaitUntil(() => cardsDealt == _settings.CardsDealNum);
         onComplete?.Invoke();
     }
 }
