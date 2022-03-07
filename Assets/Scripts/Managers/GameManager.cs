@@ -13,13 +13,16 @@ public class GameManager : MonoBehaviour
 
     [SerializeField] private Deck _deck;
     [SerializeField] private Hand _hand;
-    [SerializeField] private UIManager _uiManager;
 
 
     public delegate void EmptyDelegate();
     public event EmptyDelegate GameStarted;
 
-    private SuitSO _suitSettings;
+    private CardSettingsSO _cardSettings;
+
+    private bool _dealtPredefinedDeck = false;
+
+    private EGameState _state = EGameState.None;
 
     private void Awake()
     {
@@ -28,7 +31,7 @@ public class GameManager : MonoBehaviour
             Debug.LogError("No game settings SO found in GameManager, assign settings SO.");
             return;
         }
-        _suitSettings = _settings.suitSettings;
+        _cardSettings = _settings.cardSettings;
 
     }
 
@@ -59,34 +62,113 @@ public class GameManager : MonoBehaviour
 
     private void OnGameStarted()
     {
+        _state = EGameState.Busy;
+        // pass order of suits to the deck
+        _deck.SetSuitSettings(_cardSettings);
         // populate cards in deck, shuffle them
-        _deck.CreateCards(_suitSettings);
+        _deck.CreateCards();
         _hand.SetCardListSize(_settings.CardsDealNum);
         // tween in the cards, when finished - deal cards to hand after delay
         _deck.Show(() =>
         {
             StartCoroutine(Utils.DelayAction(() =>
             {
-                StartCoroutine(DealCardsToHand());
+                StartCoroutine(DealCardsToHand(ResetGameState));
             }, 0.75f));
         });
     }
 
-    private IEnumerator DealCardsToHand()
+    public void RedealDefaultHand()
     {
-        for (int i = 0; i < _settings.CardsDealNum; i++)
+        if (_state != EGameState.Idle)
         {
-            CardDisplay card = _deck.DrawCard();
-            card.SetSortingOrder(_settings.CardsDealNum - i);
-            var cardInHandPosition = _hand.GetCardPositionAt(i);
-            var cardRotation = _hand.GetCardEulerRotationAt(i);
-            _deck.AnimateCardToPosition(_settings.CardDealingAnimTime, card, i, _hand.GetCardPositionAt(i), Quaternion.Euler(cardRotation), OnCardAnimatedToHand);
-            card.Turn(true, _settings.CardTurnAnimTime, 0.3f);
-            yield return new WaitForSeconds(_settings.DelayBetweenDealingCards);
+            return;
         }
+        _state = EGameState.Busy;
+        _hand.SetCardsInteractable(false);
+        bool addCardsToDeck = _dealtPredefinedDeck ? false : true;
+        StartCoroutine(ReturnCardsToDeck(addCardsToDeck, () =>
+         {
+             _deck.Shuffle();
+             StartCoroutine(DealCardsToHand(ResetGameState));
+         }));
     }
 
-    private IEnumerator ReturnCardsToDeck(Action onComplete)
+    public void RedealPredefinedHand()
+    {
+        if (_state != EGameState.Idle)
+        {
+            return;
+        }
+        _state = EGameState.Busy;
+        _hand.SetCardsInteractable(false);
+        bool addCardsToDeck = _dealtPredefinedDeck ? false : true;
+        StartCoroutine(ReturnCardsToDeck(addCardsToDeck, () =>
+         {
+             _deck.ResetDealingPredefinedCards();
+             StartCoroutine(DealPredefinedCardsToHand(ResetGameState));
+         }));
+    }
+
+    public void SubsequentSortOfPlayerHand()
+    {
+        if (_state != EGameState.Idle)
+        {
+            return;
+        }
+        List<int>[] sortedPlayerCards = Sorting.SubsequentSort(_hand.Cards, _settings);
+        StartCoroutine(AnimateSortedPlayerCards(sortedPlayerCards, ResetGameState));
+    }
+
+    public void SameValueSortOfPlayerHand()
+    {
+        if (_state != EGameState.Idle)
+        {
+            return;
+        }
+        List<int>[] sortedPlayerCards = Sorting.SameValueSort(_hand.Cards, _settings);
+        StartCoroutine(AnimateSortedPlayerCards(sortedPlayerCards, ResetGameState));
+
+    }
+
+    public void SmartSortOfPlayerHand()
+    {
+        if (_state != EGameState.Idle)
+        {
+            return;
+        }
+        List<int>[] sortedPlayerCards = Sorting.SmartSorting(_hand.Cards, _settings);
+        StartCoroutine(AnimateSortedPlayerCards(sortedPlayerCards, ResetGameState));
+    }
+
+    private IEnumerator AnimateSortedPlayerCards(List<int>[] sortedCardIds, Action onComplete)
+    {
+        List<CardDisplay> cards = _hand.Cards;
+        float sortedCardsYOffset = 2f;
+        int newSortingOrder = 0;
+        for (int i = 0; i < sortedCardIds.Count(); i++)
+        {
+            if (sortedCardIds[i].Count > 0)
+            {
+                for (int j = 0; j < sortedCardIds[i].Count; j++)
+                {
+                    CardDisplay card = cards[sortedCardIds[i][j]];
+                    // disable dragging of the card
+                    card.Draggable.enabled = false;
+                    // set sorting order to be larger than sorting order of previous combination, in case they would overlap by any chance
+                    card.SetSortingOrder(newSortingOrder);
+                    Vector3 newCardPosition = new Vector3(-2 + i * 1.5f, _hand.transform.position.y + sortedCardsYOffset - j * 0.25f, 0);
+                    // wait for the card to reach target destination, only then continue
+                    _deck.AnimateCardToPosition(_settings.CardDealingAnimTime, card, i, newCardPosition, Quaternion.Euler(0, 0, 0), null);
+                    newSortingOrder++;
+                    yield return new WaitForSeconds(_settings.DelayBetweenDealingCards);
+                }
+            }
+        }
+        onComplete?.Invoke();
+    }
+
+    private IEnumerator ReturnCardsToDeck(bool addCardToDeck, Action onComplete)
     {
         int cardsDealt = 0;
         int cardsInHand = _hand.Cards.Count;
@@ -98,100 +180,73 @@ public class GameManager : MonoBehaviour
             {
                 cardsDealt++;
                 _hand.RemoveCard(card);
-                _deck.AddCard(card.Card);
+                if (addCardToDeck)
+                {
+                    _deck.AddCard(card.Card);
+                }
                 Destroy(card.gameObject);
             });
             card.Turn(false, _settings.CardTurnAnimTime, 0);
             yield return new WaitForSeconds(_settings.DelayBetweenReturningCardsToDeck);
         }
-        yield return new WaitWhile(() => cardsDealt != cardsInHand);
         onComplete?.Invoke();
     }
 
     private void OnCardAnimatedToHand(CardDisplay card)
     {
-        _hand.AddCard(card);
-        card.TurnFaceUp();
-    }
-
-    // return cards from hand to deck, shuffle, deal new hand
-    public void RedealHand()
-    {
-        _hand.SetCardsInteractable(false);
-        StartCoroutine(ReturnCardsToDeck(() =>
+        if (card != null)
         {
-            _deck.Shuffle();
-            StartCoroutine(DealCardsToHand());
-        }));
-    }
-
-    public void AnimateSortedCards(List<int> cards)
-    {
-
-    }
-
-    public void SubsequentSort()
-    {
-        // get cards in hand
-        List<CardDisplay> cardDisplays = _hand.Cards;
-        // calculate max possible number of successful card combinations;
-        var maxSortedCardGroups = _settings.CardsDealNum / _settings.MinLegalCardsCombNum;
-        // array of lists that will store valid card combinations + LINQ initialization
-        var sortedCardsIds = new List<int>[maxSortedCardGroups].Select(item => new List<int>()).ToArray();
-        // array of lists that will store sorted by suit cards + LINQ initialization
-        var cardsInSuits = new List<CardDisplay>[_suitSettings.SuitOrder.Count].Select(item => new List<CardDisplay>()).ToArray();
-
-        int numOfCompletedCombinations = 0;
-        for (int i = 0; i < cardsInSuits.Length; i++)
-        {
-            cardsInSuits[i] = cardDisplays.Where(cardDisplay => _suitSettings.SuitOrder.IndexOf(cardDisplay.Card.Suit) == i).ToList();
-            if (cardsInSuits[i].Count == 0)
-            {
-                continue;
-            }
-            List<CardDisplay> sortedCardDisplays = cardsInSuits[i].OrderBy(CardDisplay => CardDisplay.Card.Rank).ToList();
-            var currentCombination = new List<int>();
-            currentCombination.Add(cardDisplays.IndexOf(sortedCardDisplays[0]));
-            for (int j = 1; j < sortedCardDisplays.Count; j++)
-            {
-                if (cardDisplays[currentCombination[currentCombination.Count - 1]].Card.Rank + 1 == sortedCardDisplays[j].Card.Rank)
-                {
-                    currentCombination.Add(cardDisplays.IndexOf(sortedCardDisplays[j]));
-                }
-                else
-                {
-                    if (currentCombination.Count >= _settings.MinLegalCardsCombNum)
-                    {
-                        sortedCardsIds[numOfCompletedCombinations] = new List<int>(currentCombination);
-                        numOfCompletedCombinations++;
-                    }
-                    currentCombination.Clear();
-                    currentCombination.Add(cardDisplays.IndexOf(sortedCardDisplays[j]));
-                    continue;
-                }
-            }
-            if (currentCombination.Count >= _settings.MinLegalCardsCombNum)
-            {
-                sortedCardsIds[numOfCompletedCombinations] = new List<int>(currentCombination);
-                numOfCompletedCombinations++;
-            }
-            currentCombination.Clear();
+            _hand.AddCard(card);
+            card.TurnFaceUp();
         }
-
-        for (int i = 0; i < sortedCardsIds.Count(); i++)
+        else
         {
-            if (sortedCardsIds[i].Count > 0)
-            {
-                print("===| " + cardDisplays[sortedCardsIds[i][0]].Card.Suit + " |===");
-                foreach (var cardId in sortedCardsIds[i])
-                {
-                    print(cardDisplays[cardId].Card.Rank);
-                }
-            }
-            else
-            {
-                print("No 123 combinations in suit " + i);
-            }
+            Debug.LogWarning("Dealt NULL from deck, not adding NULL to hand.");
         }
+    }
+    private void ResetGameState()
+    {
+        _state = EGameState.Idle;
+    }
+    private IEnumerator DealPredefinedCardsToHand(Action onComplete)
+    {
+        _dealtPredefinedDeck = true;
+        for (int i = 0; i < 11; i++)
+        {
+            CardDisplay card;
+
+            card = _deck.DrawPredefinedCard();
+
+            card.SetSortingOrder(_settings.CardsDealNum - i);
+
+            var cardInHandPosition = _hand.GetCardPositionAt(i);
+            var cardRotation = _hand.GetCardEulerRotationAt(i);
+
+            _deck.AnimateCardToPosition(_settings.CardDealingAnimTime, card, i, _hand.GetCardPositionAt(i), Quaternion.Euler(cardRotation), OnCardAnimatedToHand);
+            card.Turn(true, _settings.CardTurnAnimTime, 0.3f);
+            yield return new WaitForSeconds(_settings.DelayBetweenDealingCards);
+        }
+        onComplete?.Invoke();
+    }
+
+    private IEnumerator DealCardsToHand(Action onComplete)
+    {
+        _dealtPredefinedDeck = false;
+        for (int i = 0; i < _settings.CardsDealNum; i++)
+        {
+            CardDisplay card;
+
+            card = _deck.DrawCard();
+
+            card.SetSortingOrder(_settings.CardsDealNum - i);
+
+            var cardInHandPosition = _hand.GetCardPositionAt(i);
+            var cardRotation = _hand.GetCardEulerRotationAt(i);
+
+            _deck.AnimateCardToPosition(_settings.CardDealingAnimTime, card, i, _hand.GetCardPositionAt(i), Quaternion.Euler(cardRotation), OnCardAnimatedToHand);
+            card.Turn(true, _settings.CardTurnAnimTime, 0.3f);
+            yield return new WaitForSeconds(_settings.DelayBetweenDealingCards);
+        }
+        onComplete?.Invoke();
     }
 }

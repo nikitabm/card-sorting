@@ -5,25 +5,31 @@ using UnityEngine;
 
 public class Deck : MonoBehaviour
 {
-
     [SerializeField] private CardDisplay _cardPrefab;
-
-    [SerializeField] private Sprite _cardBackSprite;
-
-    [SerializeField] private Sprite[] _cardSprites;
 
     [SerializeField] private Transform _visualsRoot;
 
     [SerializeField] private Transform _cardSpawnRoot;
 
+    [Space(10)]
+    [SerializeField] private List<CardData> _predefinedCards;
+
     private Stack<Card> _cards = new Stack<Card>();
 
+    private CardSettingsSO _cardSettings;
+
     public Transform CardSpawnRoot => _cardSpawnRoot;
+    private int _currentPredefinedCardId = 0;
+
+    public void SetSuitSettings(CardSettingsSO settings)
+    {
+        _cardSettings = settings;
+    }
     /*
         Create ordered array of cards, assign them with sprites ranks and suits
         Shuffle array and then populate _cards stack
     */
-    public void CreateCards(SuitSO suitSettings)
+    public void CreateCards()
     {
         Card[] tempCardArr = new Card[52];
         Card tempCard;
@@ -33,7 +39,7 @@ public class Deck : MonoBehaviour
             for (int j = 0; j < 13; j++)
             {
                 cardInDeckIndex = i * 13 + j;
-                tempCard = new Card(suitSettings.SuitOrder[i], j, _cardSprites[cardInDeckIndex], _cardBackSprite);
+                tempCard = new Card(_cardSettings.SuitOrder[i], j + 1, _cardSettings.CardSprites[cardInDeckIndex], _cardSettings.CardBackSprite);
                 tempCardArr[cardInDeckIndex] = tempCard;
             }
         }
@@ -48,6 +54,7 @@ public class Deck : MonoBehaviour
 
     public void Shuffle()
     {
+        _currentPredefinedCardId = 0;
         Card[] tempCardArr = _cards.ToArray();
         ShuffleCardArr(tempCardArr);
 
@@ -56,6 +63,11 @@ public class Deck : MonoBehaviour
         {
             _cards.Push(card);
         }
+    }
+
+    public void ResetDealingPredefinedCards()
+    {
+        _currentPredefinedCardId = 0;
     }
 
     // Tween in the deck of cards
@@ -86,6 +98,27 @@ public class Deck : MonoBehaviour
             {
                 onComplete?.Invoke();
             });
+    }
+
+    public CardDisplay DrawPredefinedCard()
+    {
+        if (_predefinedCards.Count > _currentPredefinedCardId && _predefinedCards.Count > 0 && _cardSpawnRoot != null)
+        {
+            var cardsArr = _cards.ToArray();
+            CardData cardData = _predefinedCards[_currentPredefinedCardId];
+            CardDisplay drawnCard = Instantiate(_cardPrefab, _cardSpawnRoot.transform.position, Quaternion.identity);
+            // get correct sprite Id (using rank-1 because card ranks are defined from 1 in inspector, not from 0)
+            int spriteId = _cardSettings.GetOrderOfSuit(cardData.suit) * 13 + (cardData.rank - 1);
+            _currentPredefinedCardId++;
+
+            drawnCard.SetCard(new Card(cardData.suit, cardData.rank, _cardSettings.CardSprites[spriteId], _cardSettings.CardBackSprite));
+            drawnCard.name = $"{drawnCard.Card.Suit}_{drawnCard.Card.Rank}";
+            return drawnCard;
+        }
+        else
+        {
+            return null;
+        }
     }
 
     // pop card from _cards stack, create CardDisplay, assign card data to it, return it

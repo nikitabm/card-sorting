@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _cardsDealNum: 11
   _minLegalCardCombNum: 3
-  suitSettings: {fileID: 11400000, guid: 4cc9991398202dd47b7b475ce87a0fda, type: 2}
+  cardSettings: {fileID: 11400000, guid: 4cc9991398202dd47b7b475ce87a0fda, type: 2}
   _cardDealingAnimTime: 0.8
   _delayBetweenDealingCards: 0.2
   _cardTurnAnimTime: 0.3

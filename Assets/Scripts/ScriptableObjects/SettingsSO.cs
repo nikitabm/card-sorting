@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 [CreateAssetMenu(fileName = "Settings", menuName = "Settings/Create new settings SO")]
 
@@ -6,8 +7,7 @@ public class SettingsSO : ScriptableObject
     [SerializeField] private int _cardsDealNum = 11;
     [SerializeField] private int _minLegalCardCombNum = 3;
     [Space(10)]
-    [Tooltip("List of suits used in code to specify the order of suits for creation and suit operations (e.g. creation of cards, shiffling)")]
-    public SuitSO suitSettings;
+    public CardSettingsSO cardSettings;
     [Header("Dealing Animation Settings")]
     [SerializeField] private float _cardDealingAnimTime = 1f;
     [SerializeField] private float _delayBetweenDealingCards = 0.2f;
