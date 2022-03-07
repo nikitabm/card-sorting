@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7138052493593300792}
   - component: {fileID: 545435067702981655}
+  - component: {fileID: 7650162208185314241}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -46,4 +47,15 @@ MonoBehaviour:
   _settings: {fileID: 11400000, guid: 07a472b7f9a68ef41ad575c3595e7810, type: 2}
   _deck: {fileID: 0}
   _hand: {fileID: 0}
-  _uiManager: {fileID: 0}
+--- !u!114 &7650162208185314241
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7138052493593300793}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18430d0dc3da97341aeeda57d15198ef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

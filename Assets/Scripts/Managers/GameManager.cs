@@ -14,11 +14,12 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Deck _deck;
     [SerializeField] private Hand _hand;
 
-
     public delegate void EmptyDelegate();
     public event EmptyDelegate GameStarted;
 
     private CardSettingsSO _cardSettings;
+
+    private Sorter _sorting;
 
     private bool _dealtPredefinedDeck = false;
 
@@ -32,7 +33,7 @@ public class GameManager : MonoBehaviour
             return;
         }
         _cardSettings = _settings.cardSettings;
-
+        _sorting = GetComponent<Sorter>();
     }
 
     private void Start()
@@ -116,7 +117,7 @@ public class GameManager : MonoBehaviour
         {
             return;
         }
-        List<int>[] sortedPlayerCards = Sorting.SubsequentSort(_hand.Cards, _settings);
+        List<int>[] sortedPlayerCards = _sorting.SubsequentSort(_hand.Cards, _settings);
         StartCoroutine(AnimateSortedPlayerCards(sortedPlayerCards, ResetGameState));
     }
     // function called from UI button. Check state to prevent pressing multiple times
@@ -126,7 +127,7 @@ public class GameManager : MonoBehaviour
         {
             return;
         }
-        List<int>[] sortedPlayerCards = Sorting.SameValueSort(_hand.Cards, _settings);
+        List<int>[] sortedPlayerCards = _sorting.SameValueSort(_hand.Cards, _settings);
         StartCoroutine(AnimateSortedPlayerCards(sortedPlayerCards, ResetGameState));
 
     }
@@ -137,7 +138,7 @@ public class GameManager : MonoBehaviour
         {
             return;
         }
-        List<int>[] sortedPlayerCards = Sorting.SmartSorting(_hand.Cards, _settings);
+        List<int>[] sortedPlayerCards = _sorting.SmartSorting(_hand.Cards, _settings);
         StartCoroutine(AnimateSortedPlayerCards(sortedPlayerCards, ResetGameState));
     }
     /*
