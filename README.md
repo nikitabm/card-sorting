@@ -2,7 +2,7 @@
 Card sorting demo project that displays and animates dealing of cards using custom build Tween library. Cards in hand can be sorted using subsequent 123 sorting, same value 777 sorting, and smart sorting that combines both algorithms and outputs cards sorted in most optimal way. In this demo most optimal way is having most number of points in sorted cards.
 
 ### HOW TO USE
-When running the application - it will deal you set number of cards. After that you can press one of three buttons that will sort the cards for you. If you are not happy with your hand you can use blue restart button to get a new random hand of cards. **In case you just want to see sorting at work** there is a button that deals 11 predefined cards that illustrates how sorting works.
+When running the application - it will deal you set number of cards. After that you can press one of three buttons that will sort the cards for you. If you are not happy with your hand you can use blue restart button to get a new random hand of cards. **In case you just want to see sorting at work** there is a button that deals 11 predefined cards that have enough cards for different types of sorts.
 
 
 ![alt text](demo.gif)
