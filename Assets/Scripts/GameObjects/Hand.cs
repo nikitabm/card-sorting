@@ -16,11 +16,13 @@ public class Hand : MonoBehaviour
 
     [SerializeField] private CardDisplay _draggedCard = null;
     private int _draggedCardIndex = 0;
+
     private void Start()
     {
 
     }
 
+    // this update updates the cards when user selects a card to drag and then rearranges it in hand
     private void Update()
     {
         if (_draggedCard)
@@ -34,7 +36,7 @@ public class Hand : MonoBehaviour
 
                 if (_draggedCard.transform.position.x < leftNeighbour.transform.position.x)
                 {
-                    // move neighbour t
+                    // move neighbour to right
                     _cards.Remove(_draggedCard);
                     _cards.Insert(_draggedCardIndex - 1, _draggedCard);
                     _cards[_draggedCardIndex].SetSortingOrder(_draggedCardIndex + 1);
@@ -46,7 +48,7 @@ public class Hand : MonoBehaviour
                 rightNeightbour = _cards[_draggedCardIndex + 1];
                 if (_draggedCard.transform.position.x > rightNeightbour.transform.position.x)
                 {
-                    // move neighbour t
+                    // move neighbour to left
                     _cards.Remove(_draggedCard);
                     _cards.Insert(_draggedCardIndex + 1, _draggedCard);
                     _cards[_draggedCardIndex].SetSortingOrder(_draggedCardIndex);
@@ -67,13 +69,11 @@ public class Hand : MonoBehaviour
 
     private void OnCardDragStarted(CardDisplay cardDisplay)
     {
-        print("drag started");
         _draggedCard = cardDisplay;
     }
 
     private void OnCardDragEnded(CardDisplay cardDisplay)
     {
-        print("drag ended");
         int cardIndex = _cards.IndexOf(cardDisplay);
         _draggedCard = null;
 
