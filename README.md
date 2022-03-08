@@ -51,10 +51,11 @@ In the end - combination with the highest score will be the most optimal set of 
 ### Next Improvements
 
 Overall I am happy with the architecture of the application, but there are few points I would want to improve if I had more time for the development of this application:
-1. Rework smart sort algorithm using knapsack algorithm as it would be faster and more optimized
+1. Rework smart sort algorithm using approach to solving knapsack problem as it would be faster.
 2. Change the way I pass cards into sorting algorithm. There is no need to pass CardDisplay, instead I can just pass card rank, its suit and index in the hand.
 3. Add more visual effects and score displayment at the end of every sorting.
 4. Fix bug where you can't drag cards after they've been sorted into groups. To be able to drag them again you have to redeal new hand.
+5. Decouple UI function calls to UI manager and wire up UI with UI managers.
 
 
 Game Icon credits:
