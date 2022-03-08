@@ -4,6 +4,8 @@ Card sorting demo project that displays and animates dealing of cards using cust
 ### HOW TO USE
 When running the application - it will deal you set number of cards. After that you can press one of three buttons that will sort the cards for you. If you are not happy with your hand you can use blue restart button to get a new random hand of cards. **In case you just want to see sorting at work** there is a button that deals 11 predefined cards that have enough cards for different types of sorts.
 
+**NOTE**
+When cards are sorted once - they won't come back to hand if you sort cards using different sorting algorithm. Redeal new hand and sort with another algorithm, otherwise cards will overlap old sorted cards
 
 ![alt text](demo.gif)
 
