@@ -11,14 +11,7 @@ public class BuildCommands : MonoBehaviour
     public static void BuildWebGL()
     {
         BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions();
-        var scenes = new List<string>();
-
-        for (int i = 0; i < SceneManager.sceneCountInBuildSettings; i++)
-        {
-            Scene scene = SceneManager.GetSceneByBuildIndex(i);
-            scenes.Add(scene.path);
-        }
-        buildPlayerOptions.scenes = scenes.ToArray();
+        buildPlayerOptions.scenes = new[] { "Assets/Scenes/Preloader.unity", "Assets/Scenes/Main.unity" };
         buildPlayerOptions.locationPathName = "build/WebGL";
         buildPlayerOptions.target = BuildTarget.WebGL;
         buildPlayerOptions.options = BuildOptions.None;
